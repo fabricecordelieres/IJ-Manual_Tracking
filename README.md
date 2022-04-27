@@ -87,7 +87,8 @@ __Remarks:__
 Dots size, line width and font size may be adjusted by modifying the corresponding values in the appropriate fields under “Drawing Parameters” option.
 
 <p align="center">
-  <img src="images/img16.gif)
+  <img src="images/img16.gif">
+</p>
  
  
 ## Retrieving z coordinates & quantify
@@ -166,7 +167,8 @@ __Remarks:__
 - Dots size may be adjusted by modifying the corresponding value in the appropriate field under “Drawing Parameters” option.
 
 <p align="center">
-  <img src="images/img17.gif)
+  <img src="images/img17.gif">
+</p>
 
 
 ## 3D results table
