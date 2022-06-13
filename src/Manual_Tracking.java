@@ -1,17 +1,8 @@
-/*Manual tracking v2.1, 19/07/05
-    Fabrice P Cordelières, fabrice.cordelieres at curie.u-psud.fr
+/*Manual tracking v3, 16/06/22
+    Fabrice P CordeliÃ¨res, fabrice.cordelieres at gmail.com
 
-New features since v1.0:
-2D centring correction added
-Directionality check added
-Previous track files may be reloaded
-3D features added (retrieve z coordinates, quantification and 3D representation as VRML file)
- 
-Minor improvments since v2.0
-"Del track n°" is automatically set to the last track number in the list after ending a track, loading a previous track file or deleting a track.
-
-Bug correction since v2.0
-Corrected bug adding a new track number after clicking on end track even though no track was currently being followed. 
+Bug correction since v2.1
+Updated the re-load data process
  */
 
 
@@ -20,7 +11,6 @@ import java.awt.event.*;
 import java.awt.SystemColor;
 import java.io.*;
 import java.lang.*;
-import java.util.StringTokenizer;
 import ij.*;
 import ij.gui.*;
 import ij.io.*;
@@ -190,18 +180,17 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     //Results tables------------------------------------------------------------
     ResultsTable rt; //2D results table
     ResultsTable rtmp; // Temporary results table
-    String[] head={"Track n°","Slice n°","X","Y","Distance","Velocity","Pixel Value"}; //2D results table's headings
+    String[] head={"Track nÂ°","Slice nÂ°","X","Y","Distance","Velocity","Pixel Value"}; //2D results table's headings
     ResultsTable rt3D; //3D results table
     
     //Load Previous Track File related variables--------------------------------
     BufferedReader in; //Input file
     String line; //Input line from the input file
-    StringTokenizer Token; //used to separate tab delimited values in the imported file
-     
+  
     
     //Retrieve z coordinates dialog box & variables-----------------------------
     String[] CentringArray={"No centring correction", "Barycentre in signal box", "Max intensity in signal box"}; //List of options in the centring correction choicelist
-    int Centring=(int) Prefs.get("ManualTracking_Centring.double",0); //3D centring option n°
+    int Centring=(int) Prefs.get("ManualTracking_Centring.double",0); //3D centring option nÂ°
     int sglBoxx=(int) Prefs.get("ManualTracking_sglBoxx.double",5); //Width of the signal box
     int sglBoxy=(int) Prefs.get("ManualTracking_sglBoxy.double",5); //Height of the signal box
     int sglBoxz=(int) Prefs.get("ManualTracking_sglBoxz.double",3); //Depth of the signal box
@@ -209,7 +198,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     int bkgdBoxy=(int) Prefs.get("ManualTracking_bkgdBoxy.double",7); //Height of the background box
     int bkgdBoxz=(int) Prefs.get("ManualTracking_bkgdBoxz.double",5); //Depth of the background box
     String[] QuantificationArray={"No background correction", "Bkgd box centred on sgl box", "Bkgd box on top left" , "Bkgd box on top right" , "Bkgd box on bottom left", "Bkgd box on bottom right"}; //List of options in the quantification settings choicelist
-    int Quantification=(int) Prefs.get("ManualTracking_Quantification.double",0); //3D quantification option n°
+    int Quantification=(int) Prefs.get("ManualTracking_Quantification.double",0); //3D quantification option nÂ°
     boolean DoQuantification=Prefs.get("ManualTracking_DoQuantification.boolean",true); //True if the Do quantification checkbox is checked
     boolean DoBleachCorr=Prefs.get("ManualTracking_DoBleachCorr.boolean",true); //True if the Do bleaching correction checkbox is checked
     boolean DoVRML=Prefs.get("ManualTracking_DoVRML.boolean",true); //True if the Export 3D+t data as a VRML file checkbox is checked
@@ -268,7 +257,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     int xOld; //Variable to store previous x coordinate read from the 3D results table
     int yOld; //Variable to store previous y coordinate read from the 3D results table
     int zOld; //Variable to store previous z coordinate read from the 3D results table
-    int [][] VRMLarray; //1st dimension: line n° from the 3D results table; 2nd dimension: 0-Tag (track n°/color); 1-time; 2-x, 3-y; 4-z
+    int [][] VRMLarray; //1st dimension: line nÂ° from the 3D results table; 2nd dimension: 0-Tag (track nÂ°/color); 1-time; 2-x, 3-y; 4-z
     int vrmlCount; //Number of tracks modulo 6: will define the color applied to the track
     double DistOfView; //Distance between the object and the camera in the VRML view
     double minTime; //Minimum timepoint where a track is started
@@ -286,7 +275,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     
     
     //Stats related variables---------------------------------------------------
-    String[] lengthU={"nm","µm"};
+    String[] lengthU={"nm","Âµm"};
     String[] timeU={"sec","min"};
     int lengthIndex;
     int timeIndex;
@@ -324,7 +313,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         panel.add(butEnd);
         
         //***
-        butDel = new Button("Delete track n°");
+        butDel = new Button("Delete track nÂ°");
         butDel.addActionListener(this);
         panel.add(butDel);
         trackdel = new Choice();
@@ -516,9 +505,9 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         panel.add(calxyfield);
         choicecalxy = new Choice();
         choicecalxy.add("nm");
-        choicecalxy.add("µm");
+        choicecalxy.add("Âµm");
         choicecalxy.add("unit");
-        choicecalxy.select("µm");
+        choicecalxy.select("Âµm");
         panel.add(choicecalxy);
         
         //***
@@ -711,8 +700,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             canvas.removeMouseListener(this);
             islistening=false;
             int tracktodelete= (int) Tools.parseDouble(trackdel.getItem(trackdel.getSelectedIndex()));
-            gd = new GenericDialog("Delete Track n°" + tracktodelete);
-            gd.addMessage("Do you want to \n" + "delete track n°" + tracktodelete + " ?");
+            gd = new GenericDialog("Delete Track nÂ°" + tracktodelete);
+            gd.addMessage("Do you want to \n" + "delete track nÂ°" + tracktodelete + " ?");
             gd.showDialog();
             if (gd.wasCanceled()) return;
             
@@ -748,7 +737,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             for (i=1;i<(rt.getValue(0,rt.getCounter()-1))+1;i++){
                 trackdel.add(""+i);
             }
-            IJ.showStatus("Track n°"+tracktodelete +" Deleted !");
+            IJ.showStatus("Track nÂ°"+tracktodelete +" Deleted !");
             Nbtrack=((int) rt.getValue(0,rt.getCounter()-1))+1;
             trackdel.select(""+(Nbtrack-1));
         }
@@ -867,11 +856,17 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                     
         // Button Load Previous Track File pressed------------------------------
         if (e.getSource() == butLoad) {
+            img=WindowManager.getCurrentImage();
+            if(img==null){
+            	IJ.error("Please make sure an image is opened\nbefore trying to reload data");
+            	return;
+            }
+            
             gd = new GenericDialog("Load Previous Track File");
             gd.addMessage("Are you sure you want to \nload a previous Track file ?\nAll non saved data will be lost");
             gd.showDialog();
             if (gd.wasCanceled()) return;
-            img=WindowManager.getCurrentImage();
+            
             Width=img.getWidth();
             Height=img.getHeight();
             imgtitle = img.getTitle();
@@ -890,15 +885,15 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 in.readLine();
                 while ((line=in.readLine())!=null){
                     i=0;
-                    Token=new StringTokenizer(line);
+                    //First, try to split according to tabs
+                    String[] items=line.split("\t");
+                    
+                    //If no tabs, tries with comas
+                    if(items.length==1) items=line.split(",");
+                     
                     rt.incrementCounter();
-                    while (Token.hasMoreTokens()){
-                        if (i!=0){
-                            rt.addValue(i-1, Tools.parseDouble(Token.nextToken()));
-                        } else {
-                            Token.nextToken();
-                        }
-                        i++;
+                    for(int j=0; j<items.length; j++){
+                    	rt.addValue(j, Double.parseDouble(items[j]));
                     }
                 }
             } catch ( IOException f ) {
@@ -974,14 +969,14 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             DoVRML=gd.getNextBoolean();
             
             //Backup of parameters
-            Prefs.set("ManualTracking_Centring.double",Centring); //3D centring option n°
+            Prefs.set("ManualTracking_Centring.double",Centring); //3D centring option nÂ°
             Prefs.set("ManualTracking_sglBoxx.double",2*sglBoxx); //Width of the signal box
             Prefs.set("ManualTracking_sglBoxy.double",2*sglBoxy); //Height of the signal box
             Prefs.set("ManualTracking_sglBoxz.double",2*sglBoxz); //Depth of the signal box
             Prefs.set("ManualTracking_bkgdBoxx.double",2*bkgdBoxx); //Width of the background box
             Prefs.set("ManualTracking_bkgdBoxy.double",2*bkgdBoxy); //Height of the background box
             Prefs.set("ManualTracking_bkgdBoxz.double",2*bkgdBoxz); //Depth of the background box
-            Prefs.set("ManualTracking_Quantification.double",Quantification); //3D quantification option n°
+            Prefs.set("ManualTracking_Quantification.double",Quantification); //3D quantification option nÂ°
             Prefs.set("ManualTracking_DoQuantification.boolean",DoQuantification); //True if the Do quantification checkbox is checked
             Prefs.set("ManualTracking_DoBleachCorr.boolean",DoBleachCorr); //True if the Do bleaching correction checkbox is checked
             Prefs.set("ManualTracking_DoVRML.boolean",DoVRML); //True if the Export 3D+t data as a VRML file checkbox is checked
@@ -1040,7 +1035,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 VRMLarray=new int[rt.getCounter()][5];
             }
             
-            String[] head3D={"Track n°","Timepoint ("+choicecalt.getItem(choicecalt.getSelectedIndex())+")","X","Y","Z","Distance","Velocity","Quantif sgl","Nb voxels sgl ("+(sglBoxx*2+1)+"x"+(sglBoxy*2+1)+"x"+(sglBoxz*2+1)+" px)","Quantif bkgd","Nb voxels bkgd ("+(bkgdBoxx*2+1)+"x"+(bkgdBoxy*2+1)+"x"+(bkgdBoxz*2+1)+" px)","Sgl bkgd corr","Sgl bkgd bleach corr","Quantif ttl"};
+            String[] head3D={"Track nÂ°","Timepoint ("+choicecalt.getItem(choicecalt.getSelectedIndex())+")","X","Y","Z","Distance","Velocity","Quantif sgl","Nb voxels sgl ("+(sglBoxx*2+1)+"x"+(sglBoxy*2+1)+"x"+(sglBoxz*2+1)+" px)","Quantif bkgd","Nb voxels bkgd ("+(bkgdBoxx*2+1)+"x"+(bkgdBoxy*2+1)+"x"+(bkgdBoxz*2+1)+" px)","Sgl bkgd corr","Sgl bkgd bleach corr","Quantif ttl"};
             
             for (i=0; i<head3D.length; i++) rt3D.setHeading(i,head3D[i]);
             
@@ -1842,7 +1837,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         
         //Init rt Stat
         ResultsTable rtStat=new ResultsTable();
-        String[] statHead={"Track n°", "Nb of values", "% outward mvt", "% inward mvt", "% pausing", "% pausing while out", "% pausing while in", "Mean overall velocity", "Overall velocity SD", "Mean outward velocity", "Outward velocity SD","Mean inward velocity", "Inward velocity SD", "Freq Out>In" , "Freq In>Out", "Persistence", "Out trav dist", "In trav dist", "Total trav dist"};
+        String[] statHead={"Track nÂ°", "Nb of values", "% outward mvt", "% inward mvt", "% pausing", "% pausing while out", "% pausing while in", "Mean overall velocity", "Overall velocity SD", "Mean outward velocity", "Outward velocity SD","Mean inward velocity", "Inward velocity SD", "Freq Out>In" , "Freq In>Out", "Persistence", "Out trav dist", "In trav dist", "Total trav dist"};
         
         /*
         First line:
@@ -1883,8 +1878,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         Statgd.addNumericField("Low range",0,0);
         Statgd.addNumericField("Bin width",5,0);
         Statgd.addNumericField("Number of values",11,0);
-        Statgd.addMessage("");
-        Statgd.addCheckbox("Processivity analysis", boolProc);
+        //Statgd.addMessage("");
+        //Statgd.addCheckbox("Processivity analysis", boolProc);
         Statgd.showDialog();
         
         if (Statgd.wasCanceled()) return;
@@ -1897,7 +1892,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         Statgd.getNextNumber();
         Statgd.getNextNumber();
         Statgd.getNextNumber();
-        boolProc=Statgd.getNextBoolean();
+        //boolProc=Statgd.getNextBoolean();
         
         Prefs.set("ManualTracking_lengthIndex.double",lengthIndex);
         Prefs.set("ManualTracking_timeIndex.double",timeIndex);
@@ -1917,7 +1912,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         for (i=0; i<statHead.length;i++) rtStat.setHeading(i, statHead[i]);
         
         for (i=1;i<rt.getCounter();i++){
-            //currTrack=(int) rt.getValue("Track n°",i);
+            //currTrack=(int) rt.getValue("Track nÂ°",i);
                        
             if (data[1][0]==0){
                 beginLine=i;
@@ -1927,7 +1922,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             }
             
             //Case where the current data is part of the same track: accumulate values in the array
-            if (rt.getValue("Track n°", i-1)==rt.getValue("Track n°", i)){
+            if (rt.getValue("Track nÂ°", i-1)==rt.getValue("Track nÂ°", i)){
                 data[1][0]++;
                 currVel=rt.getValue("Velocity", i)*lengthFactor*timeFactor;
                 currDist=Math.abs(rt.getValue("Distance", i))*lengthFactor;
@@ -1970,14 +1965,14 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             
             
             //Case where we start a new track or reach the end of the table: log the summary into the stat table
-            if (!(rt.getValue("Track n°", i-1)==rt.getValue("Track n°", i)) || i==rt.getCounter()-1){
+            if (!(rt.getValue("Track nÂ°", i-1)==rt.getValue("Track nÂ°", i)) || i==rt.getCounter()-1){
                 //Necessary to jump above the first velocity value set to -1
                 endLine=i-1;
                 
                 if (i==rt.getCounter()-1) endLine++;
                                 
                 rtStat.incrementCounter();
-                data[0][0]=rt.getValue("Track n°", i-1);
+                data[0][0]=rt.getValue("Track nÂ°", i-1);
                 
                 
                 //Calculate persistence
@@ -2036,7 +2031,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         
         //Calculation of SD
         for (i=1;i<rt.getCounter();i++){
-            if (rt.getValue("Track n°", i-1)==rt.getValue("Track n°", i)){
+            if (rt.getValue("Track nÂ°", i-1)==rt.getValue("Track nÂ°", i)){
                 currVel=rt.getValue("Velocity",i)*lengthFactor*timeFactor;
                 data[8][1]+=Math.pow(currVel-data[7][1],2);
                 if (currVel>limVel) data[10][1]+=Math.pow(currVel-data[9][1],2);
@@ -2091,10 +2086,10 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             for (i=1;i<rt.getCounter();i++){
                 prevVel=rt.getValue("Velocity", i-1)*lengthFactor*timeFactor;
                 prevDist=Math.abs(rt.getValue("Distance", i-1))*lengthFactor;
-                prevTrack=rt.getValue("Track n°", i-1);
+                prevTrack=rt.getValue("Track nÂ°", i-1);
                 currVel=rt.getValue("Velocity", i)*lengthFactor*timeFactor;
                 currDist=Math.abs(rt.getValue("Distance", i))*lengthFactor;
-                currTrack=rt.getValue("Track n°", i);
+                currTrack=rt.getValue("Track nÂ°", i);
                 
                 if (prevTrack==currTrack){
                     if(Math.abs(currVel)>limVel){
@@ -2151,9 +2146,11 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             
             
             //for (i=0; i<=index; i++) IJ.log(tmpArray[0][i]+" "+tmpArray[1][i]+" "+tmpArray[2][i]);
+            /*
             if (inIndex!=0) PlotProcess("Inward processivity of "+imgtitle, inArray[0],inArray[1]);
             if (outIndex!=0) PlotProcess("Outward processivity of "+imgtitle, outArray[0],outArray[1]);
             if (inIndex!= 0 && outIndex!=0) PlotProcess("Global processivity of "+imgtitle, globalArray[0],globalArray[1]);
+            */
          }
     }
         
