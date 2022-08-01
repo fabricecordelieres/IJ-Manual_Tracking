@@ -247,3 +247,6 @@ First release
 
 ## 2005/06/15: Version 2
 New features: 2D centring correction, Directionality check, Previous track files may be reloaded, 3D features added (retrieve z coordinates, quantification and 3D representation as VRML file).
+
+## 2022/06/13: Version 3
+Updated the re-load data process which should now run under ImageJ's latests versions
